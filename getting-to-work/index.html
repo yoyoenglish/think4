@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Getting to work — vocabulary trainer B2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F2; --surface:#FFFFFF; --ink:#1D2B36; --muted:#5B6873; --rule:#D5DCE0;
+  --sign:#0E7A5F; --sign-ink:#FFFFFF; --route:#EE6A24; --ok:#0E7A5F; --ok-bg:#E2F3EC;
+  --bad:#C0392B; --bad-bg:#FBE7E4; --sel:#2F6FDB; --sel-bg:#E5EEFC; --mark:#FFE2CF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#11181E; --surface:#1A232B; --ink:#E8EDF0; --muted:#9AA7B1; --rule:#2D3943;
+    --sign:#127A60; --ok:#4CC79E; --ok-bg:#163A30; --bad:#F07264; --bad-bg:#3D1F1C;
+    --sel:#7FA8F0; --sel-bg:#1E2D47; --mark:#5A3420;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11181E; --surface:#1A232B; --ink:#E8EDF0; --muted:#9AA7B1; --rule:#2D3943;
+  --sign:#127A60; --ok:#4CC79E; --ok-bg:#163A30; --bad:#F07264; --bad-bg:#3D1F1C;
+  --sel:#7FA8F0; --sel-bg:#1E2D47; --mark:#5A3420;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Overpass","Segoe UI",system-ui,-apple-system,sans-serif;font-size:18px;line-height:1.5}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+
+/* header */
+.top h1{font-weight:900;font-size:clamp(30px,7vw,46px);line-height:1;margin:8px 0 4px;letter-spacing:-.01em}
+.top p{margin:0;color:var(--muted)}
+
+/* route line (stages are a real sequence) */
+.route{position:relative;display:grid;grid-template-columns:repeat(4,1fr);margin:28px 0 24px;padding:0;list-style:none}
+.route::before{content:"";position:absolute;left:12.5%;right:12.5%;top:13px;height:6px;border-radius:3px;background:var(--route)}
+.route button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;width:100%}
+.route .dot{width:32px;height:32px;border-radius:50%;background:var(--surface);border:5px solid var(--ink);display:grid;place-items:center;font-weight:800;font-size:13px}
+.route .lbl{font-size:14px;font-weight:600;color:var(--muted);text-align:center}
+.route button[aria-current="step"] .dot{background:var(--route);border-color:var(--ink);color:#fff}
+.route button[aria-current="step"] .lbl{color:var(--ink)}
+.route button.done .dot{background:var(--ink);color:var(--paper)}
+
+section[hidden]{display:none}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:20px}
+.instr{color:var(--muted);margin:0 0 14px}
+
+/* flashcard */
+.sign{background:var(--sign);color:var(--sign-ink);border-radius:14px;padding:18px 20px;border:4px solid var(--surface);box-shadow:0 0 0 2px var(--sign);
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.sign-pos{font-size:15px;opacity:.85}
+.sign-word{font-weight:900;font-size:clamp(28px,6.5vw,42px);line-height:1.1}
+.say{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff}
+.say svg{width:26px;height:26px}
+.say:active{transform:scale(.94)}
+.card-body{padding:18px 4px 4px}
+.def{font-size:21px;font-weight:600;margin:0 0 12px}
+.ex{margin:0 0 16px;padding-left:14px;border-left:4px solid var(--route);color:var(--muted)}
+.ex mark{background:var(--mark);color:var(--ink);border-radius:3px;padding:0 2px}
+.ru-btn{border:2px solid var(--ink);background:transparent;border-radius:999px;padding:4px 18px;font-weight:800}
+.ru-btn[aria-expanded="true"]{background:var(--ink);color:var(--paper)}
+.ru{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--paper)}
+.ru p{margin:0}
+.ru .ru-word{font-weight:800}
+.ru .ru-def{color:var(--muted)}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.count{color:var(--muted);font-weight:600}
+
+.btn{border:0;border-radius:10px;padding:10px 18px;font-weight:800;background:var(--ink);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--rule)}
+.btn.go{background:var(--route);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* match */
+.match{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:10px}
+.col{display:flex;flex-direction:column;gap:8px}
+.tile{text-align:left;border:2px solid var(--rule);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:16px;line-height:1.35;transition:background-color .15s,border-color .15s,opacity .3s}
+.tile.w{font-weight:800}
+.tile.sel{border-color:var(--sel);background:var(--sel-bg)}
+.tile.ok{border-color:var(--ok);background:var(--ok-bg);opacity:.55;cursor:default}
+.tile.no{border-color:var(--bad);background:var(--bad-bg);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-weight:600;margin-bottom:12px}
+
+/* drills */
+.prompt{font-size:21px;font-weight:600;margin:0 0 6px}
+.blank{display:inline-block;min-width:5em;border-bottom:3px solid var(--ink);text-align:center;font-weight:800}
+.blank.ok{color:var(--ok);border-color:var(--ok)}
+.blank.bad{color:var(--bad);border-color:var(--bad)}
+.sub{color:var(--muted);margin:0 0 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.answer{flex:1 1 220px;min-width:0;padding:10px 12px;border:2px solid var(--rule);border-radius:10px;background:var(--paper);font-size:19px}
+.answer.ok{border-color:var(--ok)} .answer.bad{border-color:var(--bad)}
+.fb{min-height:28px;margin-top:12px;font-weight:600}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.hint{color:var(--muted);font-weight:600}
+.done h2{font-size:28px;font-weight:900;margin:0 0 8px}
+.done ul{padding-left:20px}
+.done li{margin:4px 0}
+
+@media (max-width:520px){
+  body{font-size:17px}
+  .match{grid-template-columns:1fr}
+  .route .lbl{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Getting to work</h1>
+    <p>Vocabulary from the reading text, level B2</p>
+  </header>
+
+  <ol class="route" aria-label="Stages">
+    <li><button data-stage="cards"><span class="dot">1</span><span class="lbl">Cards</span></button></li>
+    <li><button data-stage="match"><span class="dot">2</span><span class="lbl">Match</span></button></li>
+    <li><button data-stage="gap"><span class="dot">3</span><span class="lbl">Gap fill</span></button></li>
+    <li><button data-stage="recall"><span class="dot">4</span><span class="lbl">Recall</span></button></li>
+  </ol>
+
+  <section id="cards">
+    <p class="instr">Read the explanation, listen, and look at the word in the text. Tap RU only if you need the translation.</p>
+    <div class="panel" id="card"></div>
+    <div class="pager">
+      <button class="btn ghost" id="prev">Back</button>
+      <span class="count" id="count"></span>
+      <button class="btn" id="next">Next</button>
+    </div>
+  </section>
+
+  <section id="match" hidden>
+    <p class="instr">Tap a word, then tap its explanation.</p>
+    <div class="panel" id="matchBox"></div>
+  </section>
+
+  <section id="gap" hidden>
+    <p class="instr">Type the missing word in the correct form. Wrong answers come back at the end.</p>
+    <div class="panel" id="gapBox"></div>
+  </section>
+
+  <section id="recall" hidden>
+    <p class="instr">Here is the Russian. Type the English word. Wrong answers come back at the end.</p>
+    <div class="panel" id="recallBox"></div>
+  </section>
+</div>
+
+<script>
+const W = [
+ {w:"commuter", pos:"noun", def:"a person who travels regularly between home and work or school",
+  defRu:"человек, который регулярно ездит из дома на работу или учёбу и обратно", ru:"тот, кто ежедневно ездит на работу / учёбу",
+  ex:"Of course, for some **commuters** it can be more tedious.",
+  gap:"Every morning, thousands of ___ travel into the city from the suburbs.", gapA:["commuters"],
+  rec:["commuter"]},
+ {w:"commute", pos:"noun / verb", def:"the regular journey to and from work or school; to make this journey",
+  defRu:"регулярная дорога на работу или учёбу и обратно; ездить туда и обратно", ru:"дорога на работу; ездить на работу",
+  ex:"Suddenly, **the commute** becomes very stressful.",
+  gap:"My daily ___ takes about forty minutes when the trains are on time.", gapA:["commute"],
+  rec:["commute"]},
+ {w:"tedious", pos:"adjective", def:"boring and continuing for too long",
+  defRu:"скучный и слишком долгий", ru:"утомительный, нудный",
+  ex:"For some commuters it can be **more tedious**.",
+  gap:"Sitting in a traffic jam for two hours is incredibly ___.", gapA:["tedious"],
+  rec:["tedious"]},
+ {w:"employer", pos:"noun", def:"a person or company that pays people to work for them",
+  defRu:"человек или компания, которые платят людям за работу", ru:"работодатель",
+  ex:"**Their employer** won't be happy if they're late.",
+  gap:"If you're late every day, your ___ might start looking for someone else.", gapA:["employer"],
+  rec:["employer"]},
+ {w:"keen", pos:"adjective", def:"very interested in an activity and doing it a lot (a keen rower = a person who loves rowing a boat)",
+  defRu:"очень увлечённый каким-то занятием (a keen rower — человек, увлечённый греблей)", ru:"увлечённый, заядлый",
+  ex:"Being **a keen rower**, Gabriel realised that he didn't need to be sitting still in his car.",
+  gap:"My uncle is a ___ cyclist: he rides 50 kilometres every weekend.", gapA:["keen"],
+  rec:["keen"]},
+ {w:"exchange sth for sth", say:"exchange something for something", pos:"phrase",
+  def:"to give something to someone and get something different back",
+  defRu:"отдать что-то и получить взамен что-то другое", ru:"обменять что-то на что-то",
+  ex:"So, he **exchanged** his car **for** a rowing boat and two bikes.",
+  gap:"She ___ her old laptop for a new tablet.", gapA:["exchanged"],
+  frame:"___ something for something", rec:["exchange"]},
+ {w:"elsewhere", pos:"adverb", def:"in or to another place",
+  defRu:"в другом месте или в другое место", ru:"в другом месте; в другое место",
+  ex:"**Elsewhere** in the US, Benjamin Keiffer beats the traffic by hopping on his unicycle.",
+  gap:"This café is always full, so let's go ___.", gapA:["elsewhere"],
+  rec:["elsewhere"]},
+ {w:"weave your way through", say:"weave your way through", pos:"phrase",
+  def:"to move through a crowded place by going around people or things",
+  defRu:"двигаться через людное место, огибая людей или препятствия", ru:"лавировать, пробираться сквозь",
+  ex:"…hopping on his unicycle and **weaving his way** through the New York traffic.",
+  gap:"The courier ___ his way through the busy market on his scooter.", gapA:["wove","weaved"],
+  frame:"___ your way through", rec:["weave"]},
+ {w:"share the pavement", pos:"phrase",
+  def:"to use the path at the side of the road together with other people (pavement is British English; Americans say sidewalk)",
+  defRu:"идти по тротуару вместе с другими людьми (pavement — британский вариант, в США говорят sidewalk)", ru:"делить тротуар (с кем-то)",
+  ex:"…or had to **share the pavement** with hundreds of other pedestrians.",
+  gap:"Cyclists shouldn't ride on the ___: it's for people on foot.", gapA:["pavement","sidewalk"],
+  frame:"share the ___", rec:["pavement"]},
+ {w:"pedestrian", pos:"noun", def:"a person who is walking in the street, not travelling in a vehicle",
+  defRu:"человек, который идёт по улице пешком, а не едет на транспорте", ru:"пешеход",
+  ex:"…hundreds of other **pedestrians** who were all fighting for space.",
+  gap:"This street is closed to cars; it's only for ___.", gapA:["pedestrians"],
+  rec:["pedestrian"]},
+ {w:"fight for space", pos:"phrase", def:"to compete with other people to get enough room for yourself",
+  defRu:"соперничать с другими людьми, чтобы самому хватило места", ru:"бороться за место",
+  ex:"…pedestrians who were all **fighting for space**.",
+  gap:"On the rush-hour train, passengers were fighting for ___.", gapA:["space"],
+  frame:"___ for space", rec:["fight"]},
+ {w:"involve", pos:"verb", def:"to include something as a necessary part",
+  defRu:"включать что-то как обязательную часть", ru:"включать в себя, предполагать",
+  ex:"Her journey to join the rest of the staff at her school takes several hours and **involves** crossing five rivers.",
+  gap:"The job ___ a lot of travelling, so I'm rarely at home.", gapA:["involves"],
+  rec:["involve"]}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => s.toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, " ").trim().replace(/[.!?,]+$/, "");
+const tricky = new Set();
+const scores = {};
+
+/* audio */
+function speak(text){
+  try{
+    const s = window.speechSynthesis; if(!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB"; u.rate = 0.9;
+    const vs = s.getVoices();
+    const v = vs.find(v => /^en[-_]GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
+    if (v) u.voice = v;
+    s.speak(u);
+  }catch(e){}
+}
+try{ window.speechSynthesis && window.speechSynthesis.getVoices(); }catch(e){}
+const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>';
+
+/* stages */
+const order = ["cards","match","gap","recall"];
+const started = {};
+function go(stage){
+  order.forEach(s => $("#"+s).hidden = s !== stage);
+  document.querySelectorAll(".route button").forEach(b => {
+    const s = b.dataset.stage;
+    if (s === stage) b.setAttribute("aria-current","step"); else b.removeAttribute("aria-current");
+    b.classList.toggle("done", order.indexOf(s) < order.indexOf(stage));
+  });
+  if (!started[stage]) { started[stage] = true; ({match:startMatch, gap:()=>gapDrill.start(), recall:()=>recallDrill.start()}[stage] || (()=>{}))(); }
+  window.scrollTo({top:0});
+}
+document.querySelectorAll(".route button").forEach(b => b.addEventListener("click", () => go(b.dataset.stage)));
+
+/* 1. cards */
+let ci = 0;
+function renderCard(){
+  const c = W[ci];
+  const ex = esc(c.ex).replace(/\*\*(.+?)\*\*/g, "<mark>$1</mark>");
+  $("#card").innerHTML = `
+    <div class="sign">
+      <div><div class="sign-pos">${c.pos}</div><div class="sign-word">${esc(c.w)}</div></div>
+      <button class="say" id="sayBtn" aria-label="Listen to ${esc(c.say||c.w)}">${SPK}</button>
+    </div>
+    <div class="card-body">
+      <p class="def">${esc(c.def)}</p>
+      <p class="ex">${ex}</p>
+      <button class="ru-btn" id="ruBtn" aria-expanded="false" aria-controls="ruBox">RU</button>
+      <div class="ru" id="ruBox" hidden>
+        <p class="ru-word">${esc(c.ru)}</p>
+        <p class="ru-def">${esc(c.defRu)}</p>
+      </div>
+    </div>`;
+  $("#sayBtn").onclick = () => speak(c.say || c.w);
+  $("#ruBtn").onclick = e => { const open = e.currentTarget.getAttribute("aria-expanded") === "true";
+    e.currentTarget.setAttribute("aria-expanded", String(!open)); $("#ruBox").hidden = open; };
+  $("#count").textContent = `${ci+1} of ${W.length}`;
+  $("#prev").disabled = ci === 0;
+  const last = ci === W.length - 1;
+  $("#next").textContent = last ? "Start practice" : "Next";
+  $("#next").classList.toggle("go", last);
+}
+$("#prev").onclick = () => { if (ci > 0) { ci--; renderCard(); } };
+$("#next").onclick = () => { if (ci < W.length - 1) { ci++; renderCard(); } else go("match"); };
+document.addEventListener("keydown", e => {
+  if ($("#cards").hidden || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("#next").click();
+  if (e.key === "ArrowLeft") $("#prev").click();
+});
+
+/* 2. match */
+let mRounds = [], mRound = 0, mErr = 0, selW = null, selD = null, mLeft = 0;
+function startMatch(){
+  const idx = shuffle(W.map((_, i) => i));
+  mRounds = [idx.slice(0, 6), idx.slice(6)];
+  mRound = 0; mErr = 0; renderMatch();
+}
+function renderMatch(){
+  const r = mRounds[mRound]; selW = selD = null; mLeft = r.length;
+  const L = shuffle(r).map(i => `<button class="tile w" data-side="w" data-i="${i}">${esc(W[i].w)}</button>`).join("");
+  const R = shuffle(r).map(i => `<button class="tile" data-side="d" data-i="${i}">${esc(W[i].def.replace(/\s*\(.*\)$/, ""))}</button>`).join("");
+  $("#matchBox").innerHTML = `<div class="meta"><span>Round ${mRound+1} of ${mRounds.length}</span><span id="mErr">Mistakes: ${mErr}</span></div>
+    <div class="match"><div class="col">${L}</div><div class="col">${R}</div></div>`;
+  $("#matchBox").querySelectorAll(".tile").forEach(t => t.addEventListener("click", () => pick(t)));
+}
+function pick(t){
+  if (t.classList.contains("ok")) return;
+  const side = t.dataset.side;
+  $("#matchBox").querySelectorAll(`.tile[data-side="${side}"]`).forEach(x => x.classList.remove("sel","no"));
+  t.classList.add("sel");
+  if (side === "w") { selW = t; speak(W[+t.dataset.i].say || W[+t.dataset.i].w); } else selD = t;
+  if (selW && selD) {
+    const a = selW, b = selD; selW = selD = null;
+    if (a.dataset.i === b.dataset.i) {
+      [a,b].forEach(x => { x.classList.remove("sel"); x.classList.add("ok"); x.setAttribute("aria-disabled","true"); });
+      if (--mLeft === 0) matchRoundDone();
+    } else {
+      mErr++; tricky.add(+a.dataset.i);
+      [a,b].forEach(x => { x.classList.remove("sel"); x.classList.add("no"); });
+      $("#mErr").textContent = `Mistakes: ${mErr}`;
+      setTimeout(() => [a,b].forEach(x => x.classList.remove("no")), 450);
+    }
+  }
+}
+function matchRoundDone(){
+  const more = mRound < mRounds.length - 1;
+  const box = document.createElement("div");
+  box.className = "pager";
+  box.innerHTML = more
+    ? `<span class="count">Round complete</span><button class="btn go">Next round</button>`
+    : `<span class="count">All matched. Mistakes: ${mErr}</span><span class="row"><button class="btn ghost" id="mAgain">Play again</button><button class="btn go" id="mNext">Gap fill</button></span>`;
+  $("#matchBox").appendChild(box);
+  if (more) box.querySelector(".btn").onclick = () => { mRound++; renderMatch(); };
+  else { scores.match = mErr; $("#mAgain").onclick = startMatch; $("#mNext").onclick = () => go("gap"); }
+}
+
+/* 3–4. typed drills with a repeat queue */
+function Drill(boxId, cfg){
+  let queue, cur, checked, firstTry, wrong, hintUsed;
+  const box = () => $(boxId);
+  function start(){ queue = shuffle(W.map((_, i) => i)); firstTry = 0; wrong = new Set(); next(); }
+  function next(){
+    if (!queue.length) return finish();
+    cur = queue.shift(); checked = false; hintUsed = false;
+    box().innerHTML = `<div class="meta"><span>Left: ${queue.length + 1}</span><span>First try: ${firstTry}</span></div>
+      ${cfg.prompt(W[cur])}
+      <div class="row">
+        <input class="answer" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer">
+        <button class="btn ghost" id="hint">Hint</button>
+        <button class="btn" id="chk">Check</button>
+      </div>
+      <div class="fb" id="fb" aria-live="polite"></div>`;
+    const inp = $("#ans");
+    inp.focus();
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); checked ? next() : check(); } });
+    $("#chk").onclick = () => checked ? next() : check();
+    $("#hint").onclick = () => {
+      const a = cfg.answers(W[cur])[0];
+      hintUsed = true;
+      $("#fb").className = "fb hint";
+      $("#fb").textContent = `Starts with “${a[0]}”, ${a.length} letters.`;
+      inp.focus();
+    };
+  }
+  function check(){
+    const inp = $("#ans"), val = norm(inp.value);
+    if (!val) { inp.focus(); return; }
+    const ans = cfg.answers(W[cur]);
+    const ok = ans.map(norm).includes(val);
+    checked = true;
+    inp.readOnly = true;
+    inp.classList.add(ok ? "ok" : "bad");
+    const blank = box().querySelector(".blank");
+    if (blank) { blank.textContent = ans[0]; blank.classList.add(ok ? "ok" : "bad"); }
+    if (ok) {
+      if (!wrong.has(cur) && !hintUsed) firstTry++;
+      $("#fb").className = "fb ok";
+      $("#fb").textContent = "Correct.";
+    } else {
+      wrong.add(cur); tricky.add(cur);
+      queue.push(cur);
+      $("#fb").className = "fb bad";
+      $("#fb").innerHTML = `Correct answer: <b>${esc(ans.join(" / "))}</b>. This one will come back.`;
+    }
+    speak(cfg.sayAfter(W[cur], ans[0]));
+    $("#hint").disabled = true;
+    $("#chk").textContent = "Next";
+    $("#chk").focus();
+  }
+  function finish(){
+    scores[cfg.key] = firstTry;
+    box().innerHTML = cfg.finish(firstTry);
+    box().querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
+      const act = b.dataset.act;
+      if (act === "again") start(); else go(act);
+    });
+  }
+  return {start};
+}
+
+const gapDrill = Drill("#gapBox", {
+  key:"gap",
+  prompt: c => `<p class="prompt">${esc(c.gap).replace("___", '<span class="blank">&nbsp;</span>')}</p>`,
+  answers: c => c.gapA,
+  sayAfter: (c, a) => c.gap.replace("___", a),
+  finish: n => `<div class="done"><h2>Gap fill complete</h2>
+    <p>Correct on the first try: ${n} of ${W.length}.</p>
+    <div class="row"><button class="btn ghost" data-act="again">Try again</button><button class="btn go" data-act="recall">Recall</button></div></div>`
+});
+
+const recallDrill = Drill("#recallBox", {
+  key:"recall",
+  prompt: c => `<p class="prompt">${esc(c.ru)}</p>
+    <p class="sub">${c.frame ? 'Complete the phrase: ' + esc(c.frame).replace("___", '<span class="blank">&nbsp;</span>') : esc(c.pos)}</p>`,
+  answers: c => c.rec,
+  sayAfter: c => c.say || c.w,
+  finish: n => {
+    const list = [...tricky].map(i => `<li><b>${esc(W[i].w)}</b>: ${esc(W[i].def)}</li>`).join("");
+    return `<div class="done"><h2>Well done!</h2>
+      <p>Recall, correct on the first try: ${n} of ${W.length}.<br>
+      Gap fill: ${scores.gap ?? "not done"} of ${W.length}. Match mistakes: ${scores.match ?? "not done"}.</p>
+      ${list ? `<p>Words to review:</p><ul>${list}</ul>` : "<p>No mistakes anywhere. Excellent work.</p>"}
+      <div class="row"><button class="btn ghost" data-act="again">Try again</button><button class="btn" data-act="cards">Back to cards</button></div></div>`;
+  }
+});
+
+renderCard();
+go("cards");
+</script>
+</body>
+</html>
